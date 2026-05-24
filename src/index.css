@@ -1,7 +1,9 @@
 :root {
   font-family: Inter, system-ui, sans-serif;
   color: #0f172a;
-  background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 24%),
+    linear-gradient(180deg, #0f172a 0%, #111827 45%, #f8fbff 45%, #eef4ff 100%);
   line-height: 1.5;
   font-weight: 400;
 }
@@ -9,6 +11,7 @@
 body {
   margin: 0;
   min-width: 320px;
+  background: transparent;
 }
 
 #root {
@@ -24,7 +27,7 @@ body {
   top: 0;
   z-index: 10;
   backdrop-filter: blur(16px);
-  background: rgba(15, 23, 42, 0.86);
+  background: rgba(15, 23, 42, 0.88);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -43,7 +46,7 @@ body {
   letter-spacing: 0.08em;
   font-size: 0.75rem;
   font-weight: 800;
-  color: #2563eb;
+  color: #38bdf8;
   margin-bottom: 0.5rem;
 }
 
@@ -60,6 +63,15 @@ body {
   padding-right: 1rem;
 }
 
+.hero-copy .lead {
+  color: #e2e8f0 !important;
+}
+
+.hero-copy h1 {
+  color: #ffffff;
+  text-shadow: 0 12px 30px rgba(15, 23, 42, 0.28);
+}
+
 .hero-panel,
 .auth-card,
 .auth-side-card,
@@ -67,8 +79,8 @@ body {
 .hostel-card,
 .empty-state {
   border-radius: 1.5rem;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.16);
 }
 
 .hero-panel-inner,
@@ -85,8 +97,8 @@ body {
   gap: 1rem;
   padding: 1rem 1.25rem;
   border-radius: 1.25rem;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(37, 99, 235, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(37, 99, 235, 0.1);
 }
 
 .stat-card {
