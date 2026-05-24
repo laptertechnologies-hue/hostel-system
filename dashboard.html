@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Hostel Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">Hostel Hub</a>
+            <div class="d-flex">
+                <span id="userDisplayName" class="navbar-text me-3 text-light"></span>
+                <button class="btn btn-outline-danger btn-sm" onclick="signOut()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row mb-4">
+            <div class="col">
+                <h2>Available Hostels</h2>
+                <p class="text-muted">Find your perfect stay near your university.</p>
+            </div>
+        </div>
+
+        <div id="hostelList" class="row g-4">
+            <!-- Hostels will be injected here by app.js -->
+            <div class="col-12 text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const session = await checkSession();
+            if (session) {
+                document.getElementById('userDisplayName').textContent = `Hello, ${session.user.user_metadata.name || 'User'}`;
+                fetchHostels();
+            }
+        });
+    </script>
+</body>
+</html>
