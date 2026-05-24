@@ -399,6 +399,16 @@ window.deleteHostel = deleteHostel;
 window.prepareRoomModal = prepareRoomModal;
 window.toggleRoomStatus = toggleRoomStatus;
 window.showRoomDetails = showRoomDetails;
+window.signOut = signOut;
+window.signInWithGoogle = signInWithGoogle;
+window.handleLogin = handleLogin;
+window.handleSignUp = handleSignUp;
+window.fetchHostels = fetchHostels;
+window.fetchAdminStats = fetchAdminStats;
+window.fetchAllProfiles = fetchAllProfiles;
+window.fetchAdminHostels = fetchAdminHostels;
+window.fetchAdminRooms = fetchAdminRooms;
+window.fetchAdminBookings = fetchAdminBookings;
 
 // Modal Login Handler
 document.getElementById('modalLoginForm')?.addEventListener('submit', async (e) => {
