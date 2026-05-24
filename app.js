@@ -156,7 +156,7 @@ async function fetchHostels() {
                     </p>
                     <p class="card-text text-secondary small">${hostel.hostels?.description || 'No description available.'}</p>
                     <div class="d-flex justify-content-between align-items-center">
-                        <span class="fw-bold text-success">$${(hostel.price_cents / 100).toFixed(2)} <small class="text-muted">/sem</small></span>
+                        <span class="fw-bold text-success">UGX ${(hostel.price_cents / 100).toLocaleString()} <small class="text-muted">/sem</small></span>
                         <button class="btn btn-sm btn-primary" onclick="requireAuth(() => alert('Owner Contact: ${hostel.contact_info || 'Available upon request'}'))">
                             Check Details
                         </button>
@@ -212,6 +212,41 @@ async function fetchAdminHostels() {
             </tr>
         `).join('');
     }
+}
+
+async function fetchAdminRooms() {
+    const { data, error } = await supabaseClient
+        .from('rooms')
+        .select('*, hostels(name)');
+    const container = document.getElementById('adminRoomList');
+    if (data && container) {
+        container.innerHTML = data.map((r, index) => `
+            <tr class="animate-item" style="animation-delay: ${index * 0.05}s">
+                <td>${r.hostels?.name || 'N/A'}</td>
+                <td><span class="text-capitalize">${r.room_type}</span></td>
+                <td class="fw-bold text-primary">UGX ${(r.price_cents / 100).toLocaleString()}</td>
+                <td>
+                    <span class="badge ${r.status === 'available' ? 'bg-success' : 'bg-danger'}">
+                        ${r.status.toUpperCase()}
+                    </span>
+                </td>
+                <td class="text-end">
+                    <button class="btn btn-sm ${r.status === 'available' ? 'btn-outline-danger' : 'btn-outline-success'}" 
+                            onclick="toggleRoomStatus('${r.id}', '${r.status}')">
+                        <i class="bi ${r.status === 'available' ? 'bi-x-circle' : 'bi-check-circle'}"></i> 
+                        ${r.status === 'available' ? 'Mark Unavailable' : 'Mark Available'}
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+}
+
+async function toggleRoomStatus(id, currentStatus) {
+    const newStatus = currentStatus === 'available' ? 'unavailable' : 'available';
+    const { error } = await supabaseClient.from('rooms').update({ status: newStatus }).eq('id', id);
+    if (error) alert(error.message);
+    else fetchAdminRooms();
 }
 
 async function fetchAdminBookings() {
@@ -314,6 +349,7 @@ async function handleCreateRoom(e) {
         e.target.reset();
         bootstrap.Modal.getInstance(document.getElementById('addRoomModal')).hide();
         // Refresh admin stats to show updated counts
+        fetchAdminRooms();
         fetchAdminStats();
     } catch (err) {
         alert('Error: ' + err.message);
@@ -364,3 +400,4 @@ supabaseClient.auth.onAuthStateChange(async (event, session) => {
 // Expose functions for global access
 window.deleteHostel = deleteHostel;
 window.prepareRoomModal = prepareRoomModal;
+window.toggleRoomStatus = toggleRoomStatus;

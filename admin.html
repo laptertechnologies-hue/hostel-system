@@ -48,6 +48,7 @@
         <nav class="nav flex-column mt-3">
             <a class="nav-link active" href="#" onclick="showSection('dashboard')"><i class="bi bi-speedometer2 me-2"></i> Overview</a>
             <a class="nav-link" href="#" onclick="showSection('hostels')"><i class="bi bi-building me-2"></i> Hostels</a>
+            <a class="nav-link" href="#" onclick="showSection('rooms')"><i class="bi bi-door-open me-2"></i> Rooms</a>
             <a class="nav-link" href="#" onclick="showSection('users')"><i class="bi bi-people me-2"></i> Users</a>
             <a class="nav-link" href="#" onclick="showSection('bookings')"><i class="bi bi-credit-card me-2"></i> Bookings & Visits</a>
             <hr class="mx-3 border-secondary">
@@ -116,6 +117,30 @@
                                 </tr>
                             </thead>
                             <tbody id="adminHostelList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="section-rooms" class="admin-section">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-0">
+                    <h5 class="mb-0 fw-bold">Room Management</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Hostel</th>
+                                    <th>Type</th>
+                                    <th>Price</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminRoomList"></tbody>
                         </table>
                     </div>
                 </div>
@@ -250,6 +275,7 @@
                 fetchAdminStats();
                 fetchAllProfiles();
                 fetchAdminHostels();
+                fetchAdminRooms();
                 fetchAdminBookings();
             }
         });
