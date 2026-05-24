@@ -24,6 +24,10 @@ Set these in Vercel and in your local .env file:
 - VITE_GOOGLE_CLIENT_ID
 - JWT_SECRET
 - ALLOWED_ORIGINS
+- ADMIN_EMAIL
+- ADMIN_PASSWORD
+
+Public registrations are locked to the student role. Admin access uses the server-side ADMIN_EMAIL and ADMIN_PASSWORD credentials.
 
 ## Google client ID
 Use this Client ID in both GOOGLE_CLIENT_ID and VITE_GOOGLE_CLIENT_ID:

@@ -80,7 +80,6 @@ function App() {
     name: '',
     email: '',
     password: '',
-    role: 'student',
     university: '',
   })
   const [ownerForm, setOwnerForm] = useState({
@@ -213,7 +212,6 @@ function App() {
         name: form.name,
         email: form.email,
         password: form.password,
-        role: form.role,
         university: form.university,
       }
 
@@ -222,8 +220,12 @@ function App() {
       saveSession({ token: data.token, user: data.user })
       setSession({ token: data.token, user: data.user })
       setMessage(`Welcome ${data.user.name}! Your ${data.user.role} dashboard is ready.`)
+
+      if (typeof window !== 'undefined') {
+        window.location.hash = '#dashboard'
+      }
     } catch (error) {
-      setMessage(error.message)
+      setMessage(error instanceof Error ? error.message : 'Unable to complete the request right now.')
     } finally {
       setIsSubmitting(false)
     }
@@ -612,7 +614,7 @@ function App() {
                 <div className="auth-card fade-up">
                   <p className="eyebrow">Access your account</p>
                   <h2 className="h3 fw-bold">Login or register in seconds</h2>
-                  <p className="text-secondary">Use your email and password, or sign in with Google if your client ID is configured.</p>
+                  <p className="text-secondary">Public signups are student-only. Use your email and password, or sign in with Google if your client ID is configured. Admin access is available when ADMIN_EMAIL and ADMIN_PASSWORD are set in your backend environment.</p>
                   <div className="btn-group w-100 mb-4" role="group">
                     <button type="button" className={`btn ${authMode === 'login' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setAuthMode('login')}>Login</button>
                     <button type="button" className={`btn ${authMode === 'register' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setAuthMode('register')}>Register</button>
@@ -633,20 +635,10 @@ function App() {
                       <input type="password" className="form-control" required value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
                     </div>
                     {authMode === 'register' && (
-                      <>
-                        <div className="mb-3">
-                          <label className="form-label">Role</label>
-                          <select className="form-select" value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })}>
-                            <option value="student">Student</option>
-                            <option value="owner">Owner</option>
-                            <option value="admin">Admin</option>
-                          </select>
-                        </div>
-                        <div className="mb-3">
-                          <label className="form-label">University</label>
-                          <input className="form-control" value={form.university} onChange={(event) => setForm({ ...form, university: event.target.value })} />
-                        </div>
-                      </>
+                      <div className="mb-3">
+                        <label className="form-label">University</label>
+                        <input className="form-control" value={form.university} onChange={(event) => setForm({ ...form, university: event.target.value })} />
+                      </div>
                     )}
                     <button type="submit" className="btn btn-primary w-100" disabled={isSubmitting}>{isSubmitting ? 'Processing...' : authMode === 'login' ? 'Login' : 'Create account'}</button>
                   </form>

@@ -13,6 +13,9 @@ const defaultOrigin = 'http://localhost:3000'
 const dbConfigured = Boolean(process.env.DATABASE_URL)
 const jwtConfigured = Boolean(process.env.JWT_SECRET)
 const googleConfigured = Boolean(process.env.GOOGLE_CLIENT_ID)
+const adminEmail = process.env.ADMIN_EMAIL?.trim()
+const adminPassword = process.env.ADMIN_PASSWORD?.trim()
+const adminConfigured = Boolean(adminEmail && adminPassword)
 
 let pool
 let schemaReady = false
@@ -118,6 +121,21 @@ function requireGoogleRuntime(origin, res) {
   }
 
   return true
+}
+
+function getAdminUser() {
+  if (!adminConfigured) {
+    return null
+  }
+
+  return {
+    id: 'admin-env',
+    name: 'Admin',
+    email: adminEmail,
+    role: 'admin',
+    university: null,
+    phone: null,
+  }
 }
 
 function signToken(user) {
@@ -491,7 +509,7 @@ export default async function handler(req, res) {
       }
 
       const body = await readJsonBody(req)
-      const { name, email, password, role = 'student' } = body
+      const { name, email, password } = body
 
       if (!name || !email || !password) {
         return jsonResponse(res, 400, { message: 'Name, email, and password are required.' }, origin)
@@ -503,26 +521,35 @@ export default async function handler(req, res) {
       }
 
       const password_hash = await bcrypt.hash(password, 10)
-      const user = await createUser({ name, email, password_hash, role })
+      const user = await createUser({ name, email, password_hash, role: 'student' })
       const token = signToken(user)
 
       return jsonResponse(res, 201, { token, user: sanitizeUser(user) }, origin)
     }
 
     if (path === '/api/auth/login' && req.method === 'POST') {
+      const body = await readJsonBody(req)
+      const { email, password } = body
+
+      if (!email || !password) {
+        return jsonResponse(res, 400, { message: 'Email and password are required.' }, origin)
+      }
+
+      if (adminConfigured && email === adminEmail && password === adminPassword) {
+        if (!requireJwtRuntime(origin, res)) {
+          return
+        }
+
+        const adminUser = getAdminUser()
+        return jsonResponse(res, 200, { token: signToken(adminUser), user: sanitizeUser(adminUser) }, origin)
+      }
+
       if (!requireDbRuntime(origin, res)) {
         return
       }
 
       if (!requireJwtRuntime(origin, res)) {
         return
-      }
-
-      const body = await readJsonBody(req)
-      const { email, password } = body
-
-      if (!email || !password) {
-        return jsonResponse(res, 400, { message: 'Email and password are required.' }, origin)
       }
 
       const user = await getUserByEmail(email)
