@@ -37,6 +37,18 @@ async function checkAdminSession() {
     return session;
 }
 
+async function redirectUserByRole(user) {
+    if (!user) return;
+    const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', user.id).single();
+    // Default to student if profile doesn't exist yet (syncing lag)
+    const role = profile?.role || 'student';
+    if (role === 'admin') {
+        window.location.href = 'admin.html';
+    } else {
+        window.location.href = 'dashboard.html';
+    }
+}
+
 async function handleSignUp(e) {
     e.preventDefault();
     const name = document.getElementById('signupName').value;
@@ -69,17 +81,7 @@ async function handleLogin(e) {
     if (error) {
         alert(error.message);
     } else {
-        const { data: profile } = await supabaseClient
-            .from('profiles')
-            .select('role')
-            .eq('id', data.user.id)
-            .single();
-
-        if (profile?.role === 'admin') {
-            window.location.href = 'admin.html';
-        } else {
-            window.location.href = 'dashboard.html';
-        }
+        await redirectUserByRole(data.user);
     }
 }
 
@@ -190,3 +192,14 @@ async function handleCreateHostel(e) {
         window.location.reload();
     }
 }
+
+// Global listener to handle OAuth redirects and session persistence
+supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+        const path = window.location.pathname;
+        const isAuthPage = path.endsWith('index.html') || path.endsWith('login.html') || path === '/' || path === '';
+        if (isAuthPage) {
+            await redirectUserByRole(session.user);
+        }
+    }
+});
