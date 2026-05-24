@@ -39,9 +39,13 @@ async function checkAdminSession() {
 
 async function redirectUserByRole(user) {
     if (!user) return;
+    
+    // Fetch the role from the profiles table
     const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', user.id).single();
-    // Default to student if profile doesn't exist yet (syncing lag)
-    const role = profile?.role || 'student';
+    
+    // Determine role from profile, or fallback to user metadata (useful during initial sync)
+    const role = profile?.role || user.user_metadata?.role || 'student';
+
     if (role === 'admin') {
         window.location.href = 'admin.html';
     } else {
