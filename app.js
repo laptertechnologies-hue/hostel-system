@@ -84,10 +84,17 @@ async function handleLogin(e) {
 }
 
 async function signInWithGoogle() {
+    // Ensure we redirect back to the current origin's index.html
+    const redirectUrl = window.location.origin + (window.location.pathname.includes('index.html') ? window.location.pathname : '/index.html');
+    
     const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
         options: {
-            redirectTo: window.location.origin + '/index.html'
+            redirectTo: redirectUrl,
+            queryParams: {
+                access_type: 'offline',
+                prompt: 'consent',
+            },
         }
     });
     if (error) alert(error.message);
