@@ -29,8 +29,8 @@ async function checkAdminSession() {
         window.location.href = 'login.html';
         return null;
     }
-    const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
-    if (!profile || profile.role !== 'admin') {
+    const { data: profile, error } = await supabaseClient.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
+    if (error || !profile || profile.role !== 'admin') {
         window.location.href = 'dashboard.html';
         return null;
     }
@@ -41,18 +41,20 @@ async function redirectUserByRole(user) {
     if (!user) return;
     
     try {
-        // Force fetch the latest profile data to avoid stale metadata issues
+        // The 'profiles' table is the source of truth for the assigned role.
         const { data: profile, error } = await supabaseClient
             .from('profiles')
             .select('role')
             .eq('id', user.id)
             .maybeSingle();
         
-        if (error) throw error;
+        if (error) {
+            console.warn("Could not fetch profile, falling back to metadata:", error.message);
+        }
 
-        // Use the DB role primarily. If not found, use metadata, finally fallback to student.
+        // Use DB role. If profile doesn't exist (sync lag), check metadata, otherwise student.
         const role = profile?.role || user.user_metadata?.role || 'student';
-        console.log("Redirecting user with role:", role);
+        console.log("Auth System: Identifying role...", role);
 
         if (role === 'admin') {
             window.location.replace('admin.html');
@@ -60,7 +62,7 @@ async function redirectUserByRole(user) {
             window.location.replace('dashboard.html');
         }
     } catch (err) {
-        console.error('Redirection error:', err.message);
+        console.error('Redirection Logic Failed:', err.message);
         window.location.replace('dashboard.html');
     }
 }
@@ -96,9 +98,8 @@ async function handleLogin(e) {
 
     if (error) {
         alert(error.message);
-    } else {
-        await redirectUserByRole(data.user);
     }
+    // Redirection is handled globally by onAuthStateChange listener
 }
 
 async function signInWithGoogle() {
