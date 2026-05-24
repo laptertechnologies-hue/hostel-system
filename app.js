@@ -278,6 +278,11 @@ async function handleCreateRoom(e) {
     const contact = document.getElementById('rContact').value;
     const imageFile = document.getElementById('rImageFile').files[0];
 
+    if (!hostelId) {
+        alert('Error: No hostel selected. Please close the modal and try again.');
+        return;
+    }
+
     try {
         const imageUrl = await uploadImage(imageFile);
 
@@ -295,6 +300,8 @@ async function handleCreateRoom(e) {
         alert('Room added successfully!');
         e.target.reset();
         bootstrap.Modal.getInstance(document.getElementById('addRoomModal')).hide();
+        // Refresh admin stats to show updated counts
+        fetchAdminStats();
     } catch (err) {
         alert('Error: ' + err.message);
     }
