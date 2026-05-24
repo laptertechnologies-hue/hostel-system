@@ -84,6 +84,16 @@ async function handleLogin(e) {
     }
 }
 
+async function signInWithGoogle() {
+    const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: window.location.origin + '/index.html'
+        }
+    });
+    if (error) alert(error.message);
+}
+
 async function fetchHostels() {
     const hostelList = document.getElementById('hostelList');
     const { data, error } = await supabaseClient
@@ -136,5 +146,35 @@ async function fetchAllProfiles() {
                 <td>${new Date(p.created_at).toLocaleDateString()}</td>
             </tr>
         `).join('');
+    }
+}
+
+async function handleCreateHostel(e) {
+    e.preventDefault();
+    const name = document.getElementById('hName').value;
+    const location = document.getElementById('hLocation').value;
+    const university = document.getElementById('hUniversity').value;
+    const price = document.getElementById('hPrice').value;
+    const image_url = document.getElementById('hImage').value;
+    const description = document.getElementById('hDescription').value;
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    const { error } = await supabaseClient.from('hostels').insert([{
+        owner_id: user.id,
+        name,
+        location,
+        university,
+        description,
+        price_cents: parseInt(price) * 100,
+        image_url,
+        status: 'available'
+    }]);
+
+    if (error) {
+        alert(error.message);
+    } else {
+        alert('Hostel created successfully!');
+        location.reload();
     }
 }
