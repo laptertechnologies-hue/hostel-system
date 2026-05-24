@@ -43,13 +43,12 @@ async function handleSignUp(e) {
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
     const university = document.getElementById('signupUniversity').value;
-    const role = document.getElementById('signupRole').value;
 
     const { data, error } = await supabaseClient.auth.signUp({
         email,
         password,
         options: {
-            data: { name, university, role }
+            data: { name, university, role: 'student' }
         }
     });
 
