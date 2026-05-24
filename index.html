@@ -46,14 +46,6 @@
             <div class="container">
                 <h1 class="display-4 fw-bold animate-up" style="animation-delay: 0.2s">Find Your Perfect Student Home</h1>
                 <p class="lead animate-up" style="animation-delay: 0.4s">Affordable, safe, and close to your campus.</p>
-                <div class="row justify-content-center mt-4">
-                    <div class="col-md-6">
-                        <form class="input-group mb-3 animate-up" style="animation-delay: 0.6s" role="search">
-                            <input type="text" class="form-control form-control-lg" placeholder="Search by university or location..." aria-label="Search hostels">
-                            <button class="btn btn-primary px-4" type="submit">Search</button>
-                        </form>
-                    </div>
-                </div>
             </div>
         </header>
 
@@ -83,12 +75,6 @@
                     <button class="btn btn-outline-danger btn-sm" onclick="signOut()">Logout</button>
                 `;
             }
-            
-            document.querySelector('form[role="search"]')?.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const query = e.target.querySelector('input').value;
-                fetchHostels(query);
-            });
 
             fetchHostels();
         });

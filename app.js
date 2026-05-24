@@ -40,19 +40,28 @@ async function checkAdminSession() {
 async function redirectUserByRole(user) {
     if (!user) return;
     
-    // Fetch the role from the profiles table
-    // maybeSingle() is safer as it won't throw an error if the profile sync has a slight delay
-    const { data: profile, error } = await supabaseClient.from('profiles').select('role').eq('id', user.id).maybeSingle();
-    
-    if (error) console.error('Error fetching profile:', error.message);
+    try {
+        // Force fetch the latest profile data to avoid stale metadata issues
+        const { data: profile, error } = await supabaseClient
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .maybeSingle();
+        
+        if (error) throw error;
 
-    // Determine role from profile, or fallback to user metadata (useful during initial sync)
-    const role = profile?.role || user.user_metadata?.role || 'student';
+        // Use the DB role primarily. If not found, use metadata, finally fallback to student.
+        const role = profile?.role || user.user_metadata?.role || 'student';
+        console.log("Redirecting user with role:", role);
 
-    if (role === 'admin') {
-        window.location.href = 'admin.html';
-    } else {
-        window.location.href = 'dashboard.html';
+        if (role === 'admin') {
+            window.location.replace('admin.html');
+        } else {
+            window.location.replace('dashboard.html');
+        }
+    } catch (err) {
+        console.error('Redirection error:', err.message);
+        window.location.replace('dashboard.html');
     }
 }
 
@@ -109,18 +118,12 @@ async function signInWithGoogle() {
     if (error) alert(error.message);
 }
 
-async function fetchHostels(searchQuery = '') {
+async function fetchHostels() {
     const hostelList = document.getElementById('hostelList');
-    let query = supabaseClient
+    const { data, error } = await supabaseClient
         .from('hostels')
         .select('*')
         .eq('status', 'available');
-
-    if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%,location.ilike.%${searchQuery}%,university.ilike.%${searchQuery}%`);
-    }
-
-    const { data, error } = await query;
 
     if (error) {
         console.error('Error fetching hostels:', error.message);
