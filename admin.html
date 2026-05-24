@@ -16,6 +16,8 @@
         .sidebar .nav-link { color: rgba(255,255,255,.7); padding: 1rem 1.5rem; font-weight: 500; border-left: 3px solid transparent; }
         .sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background: rgba(255,255,255,.05); border-left-color: var(--primary-color); }
         .main-content { margin-left: var(--sidebar-width); padding: 2rem; transition: all 0.3s; }
+        .admin-section { display: none; }
+        .admin-section.active { display: block; animation: slideUp 0.4s ease-out; }
         
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .stat-card { animation: slideUp 0.5s ease-out forwards; opacity: 0; border-radius: 12px; transition: transform 0.3s ease, box-shadow 0.3s ease; }
@@ -58,26 +60,34 @@
         </div>
 
         <!-- Stats Row -->
-        <div class="row g-3 mb-4">
-            <div class="col-md-4 stat-card">
-                <div class="card border-0 shadow-sm text-center p-3">
-                    <div class="text-primary mb-1"><i class="bi bi-building fs-4"></i></div>
-                    <h6 class="text-muted small fw-bold">TOTAL HOSTELS</h6>
-                    <h2 id="statHostels" class="fw-bold text-primary">0</h2>
+        <div id="section-dashboard" class="admin-section active">
+            <div class="row g-3 mb-4">
+                <div class="col-md-4 stat-card">
+                    <div class="card border-0 shadow-sm text-center p-3">
+                        <div class="text-primary mb-1"><i class="bi bi-building fs-4"></i></div>
+                        <h6 class="text-muted small fw-bold">TOTAL HOSTELS</h6>
+                        <h2 id="statHostels" class="fw-bold text-primary">0</h2>
+                    </div>
+                </div>
+                <div class="col-md-4 stat-card">
+                    <div class="card border-0 shadow-sm text-center p-3">
+                        <div class="text-success mb-1"><i class="bi bi-people fs-4"></i></div>
+                        <h6 class="text-muted small fw-bold">ACTIVE USERS</h6>
+                        <h2 id="statUsers" class="fw-bold text-success">0</h2>
+                    </div>
+                </div>
+                <div class="col-md-4 stat-card">
+                    <div class="card border-0 shadow-sm text-center p-3">
+                        <div class="text-warning mb-1"><i class="bi bi-calendar-check fs-4"></i></div>
+                        <h6 class="text-muted small fw-bold">BOOKINGS / VISITS</h6>
+                        <h2 id="statBookings" class="fw-bold text-warning">0</h2>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-4 stat-card">
-                <div class="card border-0 shadow-sm text-center p-3">
-                    <div class="text-success mb-1"><i class="bi bi-people fs-4"></i></div>
-                    <h6 class="text-muted small fw-bold">ACTIVE USERS</h6>
-                    <h2 id="statUsers" class="fw-bold text-success">0</h2>
-                </div>
-            </div>
-            <div class="col-md-4 stat-card">
-                <div class="card border-0 shadow-sm text-center p-3">
-                    <div class="text-warning mb-1"><i class="bi bi-calendar-check fs-4"></i></div>
-                    <h6 class="text-muted small fw-bold">BOOKINGS / VISITS</h6>
-                    <h2 id="statBookings" class="fw-bold text-warning">0</h2>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-0"><h5 class="mb-0 fw-bold">System Activity Summary</h5></div>
+                <div class="card-body">
+                    <p class="text-muted">Welcome to the Hostel Hub administration panel. Use the sidebar to manage your listings, users, and track site visit payments.</p>
                 </div>
             </div>
         </div>
@@ -100,6 +110,29 @@
                                 </tr>
                             </thead>
                             <tbody id="adminHostelList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="section-users" class="admin-section">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-0">
+                    <h5 class="mb-0 fw-bold">User Management</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Joined</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminUserList"></tbody>
                         </table>
                     </div>
                 </div>
@@ -183,7 +216,7 @@
                         </select>
                     </div>
                     <div class="row mb-3">
-                        <div class="col"><label class="form-label">Price (Monthly)</label><input type="number" id="rPrice" class="form-control" required></div>
+                        <div class="col"><label class="form-label">Price (Per Semester)</label><input type="number" id="rPrice" class="form-control" required></div>
                         <div class="col"><label class="form-label">Contact Info</label><input type="text" id="rContact" class="form-control" placeholder="Phone number" required></div>
                     </div>
                     <div class="mb-3">
@@ -216,7 +249,18 @@
         });
 
         function showSection(section) {
-            // Simplified routing logic could go here
+            // Hide all sections
+            document.querySelectorAll('.admin-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            // Show targeted section
+            document.getElementById(`section-${sectionId}`).classList.add('active');
+            
+            // Update sidebar active state
+            document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+                link.classList.remove('active');
+                if(link.getAttribute('onclick')?.includes(sectionId)) link.classList.add('active');
+            });
         }
     </script>
 </body>

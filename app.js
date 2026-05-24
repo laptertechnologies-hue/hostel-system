@@ -37,6 +37,16 @@ async function checkAdminSession() {
     return session;
 }
 
+async function requireAuth(action) {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+        action(session);
+    } else {
+        alert('Please login or sign up to view contact details and book rooms.');
+        window.location.href = 'login.html';
+    }
+}
+
 async function redirectUserByRole(user) {
     if (!user) return;
     
@@ -121,32 +131,39 @@ async function signInWithGoogle() {
 
 async function fetchHostels() {
     const hostelList = document.getElementById('hostelList');
+    // Fetch rooms joined with hostel information
     const { data, error } = await supabaseClient
-        .from('hostels')
-        .select('*')
+        .from('rooms')
+        .select('*, hostels(name, location, description)')
         .eq('status', 'available');
 
     if (error) {
-        console.error('Error fetching hostels:', error.message);
+        console.error('Error fetching rooms:', error.message);
         return;
     }
 
     hostelList.innerHTML = data.length ? data.map((hostel, index) => `
         <div class="col-md-4 animate-item" style="animation-delay: ${index * 0.1}s">
             <div class="card h-100 shadow-sm hostel-card">
-                <img src="${hostel.image_url || 'https://via.placeholder.com/300x200'}" class="card-img-top" alt="Hostel room at ${hostel.name} in ${hostel.location}">
+                <img src="${hostel.image_url || 'https://via.placeholder.com/300x200'}" class="card-img-top" alt="${hostel.room_type} at ${hostel.hostels?.name}" style="height: 220px; object-fit: cover;">
                 <div class="card-body">
-                    <h5 class="card-title">${hostel.name}</h5>
-                    <p class="card-text text-muted small">${hostel.location} - ${hostel.university || 'General'}</p>
-                    <p class="card-text">${hostel.description || 'No description available.'}</p>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0">${hostel.room_type.toUpperCase()}</h5>
+                        <span class="badge bg-primary rounded-pill">${hostel.hostels?.name || 'Hostel'}</span>
+                    </div>
+                    <p class="card-text text-muted small mb-2">
+                        <i class="bi bi-geo-alt"></i> ${hostel.hostels?.location || 'Location Not Set'}
+                    </p>
+                    <p class="card-text text-secondary small">${hostel.hostels?.description || 'No description available.'}</p>
                     <div class="d-flex justify-content-between align-items-center">
-                        <span class="fw-bold text-primary">$${(hostel.price_cents / 100).toFixed(2)} /mo</span>
-                        <button class="btn btn-sm btn-outline-primary">View Details</button>
+                        <span class="fw-bold text-success">$${(hostel.price_cents / 100).toFixed(2)} <small class="text-muted">/sem</small></span>
+                        <button class="btn btn-sm btn-primary" onclick="requireAuth(() => alert('Owner Contact: ${hostel.contact_info || 'Available upon request'}'))">
+                            Check Details
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
-    `).join('') : '<div class="col-12 text-center"><p>No hostels found matching your criteria.</p></div>';
+    `).join('') : '<div class="col-12 text-center py-5"><p class="text-muted">No rooms are currently listed as available.</p></div>';
 }
 
 async function fetchAdminStats() {
