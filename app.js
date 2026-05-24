@@ -93,12 +93,18 @@ async function signInWithGoogle() {
     if (error) alert(error.message);
 }
 
-async function fetchHostels() {
+async function fetchHostels(searchQuery = '') {
     const hostelList = document.getElementById('hostelList');
-    const { data, error } = await supabaseClient
+    let query = supabaseClient
         .from('hostels')
         .select('*')
         .eq('status', 'available');
+
+    if (searchQuery) {
+        query = query.or(`name.ilike.%${searchQuery}%,location.ilike.%${searchQuery}%,university.ilike.%${searchQuery}%`);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
         console.error('Error fetching hostels:', error.message);
@@ -151,7 +157,7 @@ async function fetchAllProfiles() {
 async function handleCreateHostel(e) {
     e.preventDefault();
     const name = document.getElementById('hName').value;
-    const location = document.getElementById('hLocation').value;
+    const hLocation = document.getElementById('hLocation').value;
     const university = document.getElementById('hUniversity').value;
     const price = document.getElementById('hPrice').value;
     const image_url = document.getElementById('hImage').value;
@@ -162,7 +168,7 @@ async function handleCreateHostel(e) {
     const { error } = await supabaseClient.from('hostels').insert([{
         owner_id: user.id,
         name,
-        location,
+        location: hLocation,
         university,
         description,
         price_cents: parseInt(price) * 100,
@@ -174,6 +180,6 @@ async function handleCreateHostel(e) {
         alert(error.message);
     } else {
         alert('Hostel created successfully!');
-        location.reload();
+        window.location.reload();
     }
 }

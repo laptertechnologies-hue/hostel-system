@@ -83,6 +83,13 @@
                     <button class="btn btn-outline-danger btn-sm" onclick="signOut()">Logout</button>
                 `;
             }
+            
+            document.querySelector('form[role="search"]')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const query = e.target.querySelector('input').value;
+                fetchHostels(query);
+            });
+
             fetchHostels();
         });
     </script>
