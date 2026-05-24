@@ -293,6 +293,7 @@ async function handleCreateRoom(e) {
 
         if (error) throw error;
         alert('Room added successfully!');
+        e.target.reset();
         bootstrap.Modal.getInstance(document.getElementById('addRoomModal')).hide();
     } catch (err) {
         alert('Error: ' + err.message);
