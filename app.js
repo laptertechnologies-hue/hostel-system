@@ -163,6 +163,7 @@ async function fetchHostels() {
                     </div>
                 </div>
             </div>
+        </div>
     `).join('') : '<div class="col-12 text-center py-5"><p class="text-muted">No rooms are currently listed as available.</p></div>';
 }
 
@@ -284,7 +285,7 @@ async function handleCreateRoom(e) {
             hostel_id: hostelId,
             room_type: type,
             room_name: type,
-            price_cents: parseInt(price) * 100,
+            price_cents: Math.round(Number(price) * 100),
             contact_info: contact,
             image_url: imageUrl,
             status: 'available'
