@@ -37,16 +37,6 @@ async function checkAdminSession() {
     return session;
 }
 
-async function requireAuth(action) {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) {
-        action(session);
-    } else {
-        alert('Please login or sign up to view contact details and book rooms.');
-        window.location.href = 'login.html';
-    }
-}
-
 async function redirectUserByRole(user) {
     if (!user) return;
     
@@ -157,9 +147,7 @@ async function fetchHostels() {
                     <p class="card-text text-secondary small">${hostel.hostels?.description || 'No description available.'}</p>
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="fw-bold text-success">UGX ${(hostel.price_cents / 100).toLocaleString()} <small class="text-muted">/sem</small></span>
-                        <button class="btn btn-sm btn-primary" onclick="requireAuth(() => alert('Owner Contact: ${hostel.contact_info || 'Available upon request'}'))">
-                            Check Details
-                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="showRoomDetails('${hostel.id}')">Check Details</button>
                     </div>
                 </div>
             </div>
@@ -401,3 +389,20 @@ supabaseClient.auth.onAuthStateChange(async (event, session) => {
 window.deleteHostel = deleteHostel;
 window.prepareRoomModal = prepareRoomModal;
 window.toggleRoomStatus = toggleRoomStatus;
+window.showRoomDetails = showRoomDetails;
+
+// Modal Login Handler
+document.getElementById('modalLoginForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('modalLoginEmail').value;
+    const password = document.getElementById('modalLoginPassword').value;
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+    if (error) {
+        alert(error.message);
+    } else {
+        bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+        fetchHostels(); // Refresh view
+    }
+});

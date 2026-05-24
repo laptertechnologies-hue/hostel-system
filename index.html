@@ -64,6 +64,97 @@
         </div>
     </main>
 
+    <!-- Room Details Modal -->
+    <div class="modal fade" id="roomDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold" id="rdTitle">Room Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="rdCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+                        <div class="carousel-inner rounded" id="rdImages">
+                            <!-- Images injected here -->
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#rdCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#rdCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </button>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-7">
+                            <h4 class="fw-bold text-primary mb-1" id="rdPrice"></h4>
+                            <p class="text-muted mb-3" id="rdHostelName"></p>
+                            <h6 class="fw-bold">Description</h6>
+                            <p id="rdDescription" class="text-secondary small"></p>
+                            <hr>
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-light p-2 rounded me-3">
+                                    <i class="bi bi-telephone text-primary"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Contact Owner</small>
+                                    <span class="fw-bold" id="rdContact"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="card bg-light border-0">
+                                <div class="card-body">
+                                    <h6 class="fw-bold mb-3">Interested in this room?</h6>
+                                    <button class="btn btn-primary w-100 mb-2" id="btnBookRoom">Book Now</button>
+                                    <button class="btn btn-outline-primary w-100" id="btnVisitRoom">Pay to Visit (UGX 5,000)</button>
+                                    <p class="text-center mt-3 mb-0 small text-muted">Secure your stay or schedule a tour.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inline Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 pb-4">
+                    <div class="text-center mb-4">
+                        <div class="text-primary mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                        </div>
+                        <h4 class="fw-bold">Sign in to Continue</h4>
+                        <p class="text-muted small">You need an account to view details and book rooms.</p>
+                    </div>
+                    <form id="modalLoginForm">
+                        <div class="mb-3">
+                            <input type="email" id="modalLoginEmail" class="form-control" placeholder="Email Address" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="password" id="modalLoginPassword" class="form-control" placeholder="Password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mb-3">Sign In</button>
+                    </form>
+                    <button onclick="signInWithGoogle()" class="btn btn-outline-dark w-100 d-flex align-items-center justify-content-center mb-3">
+                        <img src="https://www.google.com/favicon.ico" width="18" class="me-2"> Continue with Google
+                    </button>
+                    <div class="text-center">
+                        <p class="small text-muted mb-0">Don't have an account? <a href="login.html?tab=signup" class="text-primary text-decoration-none">Sign up</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <footer class="bg-dark text-white py-4 mt-auto">
         <div class="container text-center">
             <p>&copy; 2023 Hostel Hub. Built with Supabase & Bootstrap.</p>
