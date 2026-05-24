@@ -29,8 +29,8 @@ async function checkAdminSession() {
         window.location.href = 'login.html';
         return null;
     }
-    const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', session.user.id).single();
-    if (profile?.role !== 'admin') {
+    const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
+    if (!profile || profile.role !== 'admin') {
         window.location.href = 'dashboard.html';
         return null;
     }
@@ -41,8 +41,11 @@ async function redirectUserByRole(user) {
     if (!user) return;
     
     // Fetch the role from the profiles table
-    const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', user.id).single();
+    // maybeSingle() is safer as it won't throw an error if the profile sync has a slight delay
+    const { data: profile, error } = await supabaseClient.from('profiles').select('role').eq('id', user.id).maybeSingle();
     
+    if (error) console.error('Error fetching profile:', error.message);
+
     // Determine role from profile, or fallback to user metadata (useful during initial sync)
     const role = profile?.role || user.user_metadata?.role || 'student';
 
@@ -91,7 +94,7 @@ async function handleLogin(e) {
 
 async function signInWithGoogle() {
     // Ensure we redirect back to the current origin's index.html
-    const redirectUrl = window.location.origin + (window.location.pathname.includes('index.html') ? window.location.pathname : '/index.html');
+    const redirectUrl = `${window.location.origin}/index.html`;
     
     const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
@@ -167,6 +170,37 @@ async function fetchAllProfiles() {
     }
 }
 
+async function fetchAdminHostels() {
+    const { data, error } = await supabaseClient.from('hostels').select('*');
+    const container = document.getElementById('adminHostelList');
+    if (data && container) {
+        container.innerHTML = data.map((h, index) => `
+            <tr class="animate-item" style="animation-delay: ${index * 0.05}s">
+                <td>${h.name}</td>
+                <td>${h.location}</td>
+                <td>$${(h.price_cents / 100).toFixed(2)}</td>
+                <td><span class="badge ${h.status === 'available' ? 'bg-success' : 'bg-secondary'}">${h.status}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteHostel('${h.id}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+}
+
+async function deleteHostel(id) {
+    if (!confirm('Are you sure you want to delete this hostel?')) return;
+    const { error } = await supabaseClient.from('hostels').delete().eq('id', id);
+    if (error) {
+        alert(error.message);
+    } else {
+        fetchAdminStats();
+        fetchAdminHostels();
+    }
+}
+
 async function handleCreateHostel(e) {
     e.preventDefault();
     const name = document.getElementById('hName').value;
@@ -207,3 +241,6 @@ supabaseClient.auth.onAuthStateChange(async (event, session) => {
         }
     }
 });
+
+// Expose functions for global access
+window.deleteHostel = deleteHostel;
