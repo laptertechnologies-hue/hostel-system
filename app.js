@@ -254,7 +254,8 @@ async function deleteHostel(id) {
 
 async function uploadImage(file) {
     const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
+    // Use a timestamp and a random string to ensure unique filenames for room images
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
     const filePath = `room-images/${fileName}`;
 
     const { error: uploadError } = await supabaseClient.storage
