@@ -180,17 +180,46 @@ async function fetchAdminHostels() {
     if (data && container) {
         container.innerHTML = data.map((h, index) => `
             <tr class="animate-item" style="animation-delay: ${index * 0.05}s">
-                <td>${h.name}</td>
-                <td>${h.location}</td>
-                <td>$${(h.price_cents / 100).toFixed(2)}</td>
+                <td class="fw-bold">${h.name}</td>
+                <td><i class="bi bi-geo-alt small text-muted"></i> ${h.location}</td>
                 <td><span class="badge ${h.status === 'available' ? 'bg-success' : 'bg-secondary'}">${h.status}</span></td>
-                <td>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteHostel('${h.id}')">
+                <td class="text-end">
+                    <button class="btn btn-sm btn-light border me-1" onclick="prepareRoomModal('${h.id}')" data-bs-toggle="modal" data-bs-target="#addRoomModal">
+                        <i class="bi bi-door-open"></i> Add Room
+                    </button>
+                    <button class="btn btn-sm btn-danger opacity-75" onclick="deleteHostel('${h.id}')">
                         <i class="bi bi-trash"></i>
                     </button>
                 </td>
             </tr>
         `).join('');
+    }
+}
+
+async function fetchAdminBookings() {
+    const { data, error } = await supabaseClient
+        .from('bookings')
+        .select('*, profiles(name, email), hostels(name), rooms(room_type)')
+        .order('created_at', { ascending: false });
+
+    const container = document.getElementById('adminBookingList');
+    if (data && container) {
+        container.innerHTML = data.map((b, index) => {
+            const statusClass = b.booking_status === 'paid' ? 'bg-success' : 
+                                b.booking_status === 'pending' ? 'bg-warning text-dark' : 'bg-info';
+            return `
+                <tr class="animate-item" style="animation-delay: ${index * 0.05}s">
+                    <td>
+                        <div class="fw-bold">${b.profiles?.name || 'Unknown'}</div>
+                        <small class="text-muted">${b.profiles?.email || ''}</small>
+                    </td>
+                    <td>${b.hostels?.name || 'N/A'} <small class="text-muted">(${b.rooms?.room_type || 'Room'})</small></td>
+                    <td><span class="badge bg-light text-dark border">Visit</span></td>
+                    <td>${new Date(b.created_at).toLocaleDateString()}</td>
+                    <td><span class="badge ${statusClass}">${b.booking_status.toUpperCase()}</span></td>
+                </tr>
+            `;
+        }).join('');
     }
 }
 
@@ -205,13 +234,62 @@ async function deleteHostel(id) {
     }
 }
 
+async function uploadImage(file) {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `room-images/${fileName}`;
+
+    const { error: uploadError } = await supabaseClient.storage
+        .from('hostel-images')
+        .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabaseClient.storage
+        .from('hostel-images')
+        .getPublicUrl(filePath);
+
+    return data.publicUrl;
+}
+
+async function handleCreateRoom(e) {
+    e.preventDefault();
+    const hostelId = document.getElementById('rHostelId').value;
+    const type = document.getElementById('rType').value;
+    const price = document.getElementById('rPrice').value;
+    const contact = document.getElementById('rContact').value;
+    const imageFile = document.getElementById('rImageFile').files[0];
+
+    try {
+        const imageUrl = await uploadImage(imageFile);
+
+        const { error } = await supabaseClient.from('rooms').insert([{
+            hostel_id: hostelId,
+            room_type: type,
+            room_name: type,
+            price_cents: parseInt(price) * 100,
+            contact_info: contact,
+            image_url: imageUrl,
+            status: 'available'
+        }]);
+
+        if (error) throw error;
+        alert('Room added successfully!');
+        bootstrap.Modal.getInstance(document.getElementById('addRoomModal')).hide();
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+function prepareRoomModal(hostelId) {
+    document.getElementById('rHostelId').value = hostelId;
+}
+
 async function handleCreateHostel(e) {
     e.preventDefault();
     const name = document.getElementById('hName').value;
     const hLocation = document.getElementById('hLocation').value;
     const university = document.getElementById('hUniversity').value;
-    const price = document.getElementById('hPrice').value;
-    const image_url = document.getElementById('hImage').value;
     const description = document.getElementById('hDescription').value;
 
     const { data: { user } } = await supabaseClient.auth.getUser();
@@ -222,8 +300,6 @@ async function handleCreateHostel(e) {
         location: hLocation,
         university,
         description,
-        price_cents: parseInt(price) * 100,
-        image_url,
         status: 'available'
     }]);
 
@@ -248,3 +324,4 @@ supabaseClient.auth.onAuthStateChange(async (event, session) => {
 
 // Expose functions for global access
 window.deleteHostel = deleteHostel;
+window.prepareRoomModal = prepareRoomModal;
