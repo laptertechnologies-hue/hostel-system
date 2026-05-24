@@ -255,14 +255,17 @@ async function deleteHostel(id) {
 async function uploadImage(file) {
     const fileExt = file.name.split('.').pop();
     // Use a timestamp and a random string to ensure unique filenames for room images
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+    const fileName = `${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
     const filePath = `room-images/${fileName}`;
 
-    const { error: uploadError } = await supabaseClient.storage
+    const { data: uploadData, error: uploadError } = await supabaseClient.storage
         .from('hostel-images')
         .upload(filePath, file);
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+        console.error("Storage Upload Error:", uploadError);
+        throw new Error(`Image Upload Failed: ${uploadError.message}`);
+    }
 
     const { data } = supabaseClient.storage
         .from('hostel-images')
@@ -285,8 +288,13 @@ async function handleCreateRoom(e) {
     }
 
     try {
+        const session = await supabaseClient.auth.getSession();
+        console.log("Active Session User:", session.data.session?.user?.email);
+
+        console.log("Step 1: Uploading Image...");
         const imageUrl = await uploadImage(imageFile);
 
+        console.log("Step 2: Inserting Room Data...");
         const { error } = await supabaseClient.from('rooms').insert([{
             hostel_id: hostelId,
             room_type: type,
@@ -297,7 +305,11 @@ async function handleCreateRoom(e) {
             status: 'available'
         }]);
 
-        if (error) throw error;
+        if (error) {
+            console.error("Database Insert Error:", error);
+            throw error;
+        }
+        
         alert('Room added successfully!');
         e.target.reset();
         bootstrap.Modal.getInstance(document.getElementById('addRoomModal')).hide();
