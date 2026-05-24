@@ -248,13 +248,16 @@
             }
         });
 
-        function showSection(section) {
+        function showSection(sectionId) {
             // Hide all sections
-            document.querySelectorAll('.admin-section').forEach(section => {
-                section.classList.remove('active');
+            document.querySelectorAll('.admin-section').forEach(sec => {
+                sec.classList.remove('active');
             });
             // Show targeted section
-            document.getElementById(`section-${sectionId}`).classList.add('active');
+            const target = document.getElementById(`section-${sectionId}`);
+            if (target) {
+                target.classList.add('active');
+            }
             
             // Update sidebar active state
             document.querySelectorAll('.sidebar .nav-link').forEach(link => {
