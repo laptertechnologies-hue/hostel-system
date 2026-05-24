@@ -1,14 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const navigate = useNavigate();
 
+  useEffect(() => {
+    // Load and initialize Google Sign-In
+    const initializeGoogle = () => {
+      if (window.google) {
+        window.google.accounts.id.initialize({
+          client_id: '560793221927-d89ap70eogakodgeocsmhbve3ahjifon.apps.googleusercontent.com',
+          callback: handleGoogleResponse,
+        });
+        window.google.accounts.id.renderButton(
+          document.getElementById('google-signin-button'),
+          { theme: 'outline', size: 'large', width: 320 }
+        );
+      }
+    };
+
+    if (!document.getElementById('google-gsi-client')) {
+      const script = document.createElement('script');
+      script.id = 'google-gsi-client';
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = initializeGoogle;
+      document.body.appendChild(script);
+    } else {
+      initializeGoogle();
+    }
+  }, []);
+
+  const handleGoogleResponse = async (response) => {
+    // On successful Google sign-in, redirect to the dashboard
+    navigate('/dashboard');
+  };
+
   const handleLogin = (e) => {
     e.preventDefault();
-    // Logic: If login is successful, redirect to dashboard
-    // For now, we simulate a successful login
     navigate('/dashboard');
   };
 
@@ -41,6 +72,11 @@ const LoginPage = () => {
             Login to Dashboard
           </button>
         </form>
+
+        <div style={{ marginTop: '24px', textAlign: 'center' }}>
+          <div style={{ color: '#6b7280', fontSize: '14px', marginBottom: '16px' }}>or sign in with</div>
+          <div id="google-signin-button" style={{ display: 'flex', justifyContent: 'center' }}></div>
+        </div>
       </div>
     </div>
   );

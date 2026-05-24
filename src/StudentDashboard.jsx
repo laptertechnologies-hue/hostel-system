@@ -7,9 +7,9 @@ const StudentDashboard = () => {
 
   // This is where you will eventually fetch real data from your PostgreSQL backend
   const [roomData, setRoomData] = useState({
-    room: "Hall 4 - Room 202",
-    balance: "$0.00",
-    notice: "Water Maintenance"
+    room: "No room assigned",
+    balance: "0.00",
+    notice: "No new announcements"
   });
 
   if (isLoading) {
@@ -18,14 +18,14 @@ const StudentDashboard = () => {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f1f5f9' }}>
-      {/* Sidebar - Bold Blue */}
-      <aside style={{ width: '260px', backgroundColor: '#1e40af', color: 'white', padding: '30px' }}>
-        <h2 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '40px' }}>Student Portal</h2>
+      {/* Sidebar - Clean White with Blue accents */}
+      <aside style={{ width: '260px', backgroundColor: 'white', color: '#1e40af', padding: '30px', borderRight: '1px solid #e2e8f0' }}>
+        <h2 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '40px', color: '#2563eb' }}>Student Portal</h2>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <div style={{ padding: '12px 20px', backgroundColor: '#2563eb', borderRadius: '8px', cursor: 'pointer' }}>Overview</div>
-          <div style={{ padding: '12px 20px', borderRadius: '8px', cursor: 'pointer' }}>My Room</div>
-          <div style={{ padding: '12px 20px', borderRadius: '8px', cursor: 'pointer' }}>Payments</div>
-          <div style={{ padding: '12px 20px', borderRadius: '8px', cursor: 'pointer' }}>Settings</div>
+          <div style={{ padding: '12px 20px', backgroundColor: '#eff6ff', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>Overview</div>
+          <div style={{ padding: '12px 20px', borderRadius: '8px', cursor: 'pointer', color: '#64748b' }}>My Room</div>
+          <div style={{ padding: '12px 20px', borderRadius: '8px', cursor: 'pointer', color: '#64748b' }}>Payments</div>
+          <div style={{ padding: '12px 20px', borderRadius: '8px', cursor: 'pointer', color: '#64748b' }}>Settings</div>
         </nav>
       </aside>
 
@@ -45,14 +45,14 @@ const StudentDashboard = () => {
             {/* Essential Card 1: Room */}
             <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <p style={{ color: '#64748b', fontSize: '14px', textTransform: 'uppercase', fontWeight: 'bold' }}>Assigned Room</p>
-              <h3 style={{ fontSize: '28px', color: '#1e40af', marginTop: '10px' }}>{roomData.room}</h3>
-              <p style={{ color: '#10b981', fontSize: '14px', marginTop: '8px' }}>● Occupied</p>
+              <h3 style={{ fontSize: '24px', color: roomData.room === "No room assigned" ? '#94a3b8' : '#1e40af', marginTop: '10px' }}>{roomData.room}</h3>
+              <p style={{ color: roomData.room === "No room assigned" ? '#f87171' : '#10b981', fontSize: '14px', marginTop: '8px' }}>● {roomData.room === "No room assigned" ? "Unassigned" : "Occupied"}</p>
             </div>
 
             {/* Essential Card 2: Balance */}
             <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <p style={{ color: '#64748b', fontSize: '14px', textTransform: 'uppercase', fontWeight: 'bold' }}>Current Balance</p>
-              <h3 style={{ fontSize: '28px', color: '#1e293b', marginTop: '10px' }}>{roomData.balance}</h3>
+              <h3 style={{ fontSize: '24px', color: '#1e293b', marginTop: '10px' }}>${roomData.balance}</h3>
               <p style={{ color: '#64748b', fontSize: '14px', marginTop: '8px' }}>No pending payments</p>
             </div>
 
