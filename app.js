@@ -9,6 +9,8 @@ if (typeof supabase === 'undefined') {
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+let pendingRoomId = null;
+
 async function signOut() {
     const { error } = await supabaseClient.auth.signOut();
     if (error) console.error('Error signing out:', error.message);
@@ -132,22 +134,22 @@ async function fetchHostels() {
         return;
     }
 
-    hostelList.innerHTML = data.length ? data.map((hostel, index) => `
+    hostelList.innerHTML = data.length ? data.map((room, index) => `
         <div class="col-md-4 animate-item" style="animation-delay: ${index * 0.1}s">
             <div class="card h-100 shadow-sm hostel-card">
-                <img src="${hostel.image_url || 'https://via.placeholder.com/300x200'}" class="card-img-top" alt="${hostel.room_type} at ${hostel.hostels?.name}" style="height: 220px; object-fit: cover;">
+                <img src="${room.image_url || 'https://via.placeholder.com/300x200'}" class="card-img-top" alt="${room.room_type} at ${room.hostels?.name}" style="height: 220px; object-fit: cover;">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h5 class="card-title mb-0">${hostel.room_type.toUpperCase()}</h5>
-                        <span class="badge bg-primary rounded-pill">${hostel.hostels?.name || 'Hostel'}</span>
+                        <h5 class="card-title mb-0 text-capitalize">${room.room_type}</h5>
+                        <span class="badge bg-primary rounded-pill">${room.hostels?.name || 'Hostel'}</span>
                     </div>
                     <p class="card-text text-muted small mb-2">
-                        <i class="bi bi-geo-alt"></i> ${hostel.hostels?.location || 'Location Not Set'}
+                        <i class="bi bi-geo-alt"></i> ${room.hostels?.location || 'Location Not Set'}
                     </p>
-                    <p class="card-text text-secondary small">${hostel.hostels?.description || 'No description available.'}</p>
+                    <p class="card-text text-secondary small text-truncate">${room.hostels?.description || 'No description available.'}</p>
                     <div class="d-flex justify-content-between align-items-center">
-                        <span class="fw-bold text-success">UGX ${(hostel.price_cents / 100).toLocaleString()} <small class="text-muted">/sem</small></span>
-                        <button class="btn btn-sm btn-primary" onclick="showRoomDetails('${hostel.id}')">Check Details</button>
+                        <span class="fw-bold text-success">UGX ${(room.price_cents / 100).toLocaleString()} <small class="text-muted">/sem</small></span>
+                        <button class="btn btn-sm btn-primary" onclick="showRoomDetails('${room.id}')">Check Details</button>
                     </div>
                 </div>
             </div>
@@ -378,9 +380,16 @@ async function handleCreateHostel(e) {
 supabaseClient.auth.onAuthStateChange(async (event, session) => {
     if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
         const path = window.location.pathname;
-        const isAuthPage = path.endsWith('index.html') || path.endsWith('login.html') || path === '/' || path === '';
+        const isAuthPage = path.endsWith('login.html');
+        
         if (isAuthPage) {
             await redirectUserByRole(session.user);
+        } else if (path.endsWith('index.html') || path === '/' || path === '') {
+            // Auto-open room details if we just logged in via modal
+            if (pendingRoomId) {
+                showRoomDetails(pendingRoomId);
+                pendingRoomId = null;
+            }
         }
     }
 });
@@ -402,7 +411,15 @@ document.getElementById('modalLoginForm')?.addEventListener('submit', async (e) 
     if (error) {
         alert(error.message);
     } else {
-        bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+        const modalEl = document.getElementById('loginModal');
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+        
+        // Update navigation UI
+        document.getElementById('navAuthSection').innerHTML = `
+            <span class="me-3">Hi, ${data.user.user_metadata.name || 'User'}</span>
+            <button class="btn btn-outline-danger btn-sm" onclick="signOut()">Logout</button>
+        `;
+        
         fetchHostels(); // Refresh view
     }
 });
