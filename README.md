@@ -19,21 +19,27 @@ A responsive hostel booking website for students, hostel owners, and admins.
 
 ## Required environment variables
 Set these in Vercel and in your local .env file:
-- DATABASE_URL
-- GOOGLE_CLIENT_ID
+- SUPABASE_URL
+- SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- VITE_SUPABASE_URL
+- VITE_SUPABASE_ANON_KEY
 - VITE_GOOGLE_CLIENT_ID
-- JWT_SECRET
 - ALLOWED_ORIGINS
-- ADMIN_EMAIL
-- ADMIN_PASSWORD
 
-Public registrations are locked to the student role. Admin access uses the server-side ADMIN_EMAIL and ADMIN_PASSWORD credentials.
+Public registrations are locked to the student role and are handled by Supabase Auth.
 
 ## Google client ID
-Use this Client ID in both GOOGLE_CLIENT_ID and VITE_GOOGLE_CLIENT_ID:
+Use this Client ID in VITE_GOOGLE_CLIENT_ID:
 560793221927-d89ap70eogakodgeocsmhbve3ahjifon.apps.googleusercontent.com
 
 Add https://hostel-system-lac.vercel.app to the authorized origins in Google Cloud Console.
+
+## Supabase setup
+1. Create a Supabase project.
+2. Add the required environment variables above.
+3. Run the SQL in [sql/schema.sql](sql/schema.sql) in the Supabase SQL editor.
+4. Enable Google OAuth in Supabase and set the callback URL for your deployed app.
 
 ## Deploy to Vercel
 1. Push this repository to GitHub

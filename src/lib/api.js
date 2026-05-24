@@ -1,13 +1,6 @@
-const API_BASE = import.meta.env.VITE_API_BASE || '/api'
+import { supabase } from './supabase'
 
-export function getStoredSession() {
-  try {
-    const raw = localStorage.getItem('hostelhub-session')
-    return raw ? JSON.parse(raw) : null
-  } catch {
-    return null
-  }
-}
+const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
 async function parseResponseBody(response) {
   const text = await response.text().catch(() => '')
@@ -23,12 +16,17 @@ async function parseResponseBody(response) {
   }
 }
 
+async function getAccessToken() {
+  const { data } = await supabase.auth.getSession()
+  return data.session?.access_token || null
+}
+
 export async function apiRequest(path, options = {}) {
-  const session = getStoredSession()
+  const token = await getAccessToken()
   const response = await fetch(`${API_BASE}${path}`, {
     headers: {
       'Content-Type': 'application/json',
-      ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {}),
     },
     ...options,
@@ -66,26 +64,5 @@ export async function createBooking(payload) {
   return apiRequest('/bookings', {
     method: 'POST',
     body: JSON.stringify(payload),
-  })
-}
-
-export async function loginUser(payload) {
-  return apiRequest('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
-
-export async function registerUser(payload) {
-  return apiRequest('/auth/register', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
-
-export async function googleSignIn(credential) {
-  return apiRequest('/auth/google', {
-    method: 'POST',
-    body: JSON.stringify({ credential }),
   })
 }

@@ -1,15 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import {
-  clearSession,
-  createBooking,
-  createHostel,
-  fetchHostels,
-  getStoredSession,
-  googleSignIn,
-  loginUser,
-  registerUser,
-  saveSession,
-} from './lib/api'
+import { createBooking, createHostel, fetchHostels } from './lib/api'
+import { signInUser, signInWithGoogleCredential, signOutUser, signUpUser, supabase } from './lib/supabase'
 
 const featuredAreas = [
   {
@@ -72,8 +63,8 @@ function App() {
   const [bookings, setBookings] = useState([])
   const [search, setSearch] = useState('')
   const [authMode, setAuthMode] = useState('login')
-  const [session, setSession] = useState(() => getStoredSession())
-  const [message, setMessage] = useState('Connect your database and authentication secrets to unlock live bookings.')
+  const [session, setSession] = useState(null)
+  const [message, setMessage] = useState('Connect your Supabase project to unlock live bookings.')
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [form, setForm] = useState({
@@ -114,7 +105,7 @@ function App() {
         if (nextHostels.length) {
           setMessage(`Showing ${nextHostels.length} live hostel listings.`)
         } else {
-          setMessage('No live hostels are available yet. Add your first hostel from the owner dashboard once the database is connected.')
+          setMessage('No live hostels are available yet. Add your first hostel from the owner dashboard once your Supabase tables are connected.')
         }
       } catch (error) {
         if (!active) {
@@ -130,10 +121,25 @@ function App() {
       }
     }
 
+    const bootstrapSession = async () => {
+      const { data } = await supabase.auth.getSession()
+      if (active) {
+        setSession(data.session)
+      }
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (active) {
+        setSession(nextSession)
+      }
+    })
+
     loadHostels()
+    bootstrapSession()
 
     return () => {
       active = false
+      subscription.unsubscribe()
     }
   }, [])
 
@@ -147,19 +153,35 @@ function App() {
         return
       }
 
-      window.google.accounts.id.initialize({
-        client_id: googleClientId,
-        callback: async (response) => {
-          try {
-            const data = await googleSignIn(response.credential)
-            saveSession({ token: data.token, user: data.user })
-            setSession({ token: data.token, user: data.user })
-            setMessage(`Welcome ${data.user.name}! Your ${data.user.role} dashboard is now ready.`)
-          } catch (error) {
-            setMessage(error.message)
+      if (!window.__hostelhubGoogleInitializeWrapperInstalled) {
+        const originalInitialize = window.google.accounts.id.initialize
+
+        window.google.accounts.id.initialize = (config) => {
+          if (window.__hostelhubGoogleInitialized) {
+            return
           }
-        },
-      })
+
+          window.__hostelhubGoogleInitialized = true
+          return originalInitialize.call(window.google.accounts.id, config)
+        }
+
+        window.__hostelhubGoogleInitializeWrapperInstalled = true
+      }
+
+      if (!window.__hostelhubGoogleInitialized) {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: async (response) => {
+            try {
+              const data = await signInWithGoogleCredential(response.credential)
+              setSession(data.session)
+              setMessage(`Welcome ${data.user.user_metadata?.name || data.user.email}! Your ${data.user.user_metadata?.role || 'student'} dashboard is now ready.`)
+            } catch (error) {
+              setMessage(error.message)
+            }
+          },
+        })
+      }
 
       const container = document.getElementById('google-signin-button')
       if (container) {
@@ -177,6 +199,15 @@ function App() {
       return
     }
 
+    const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]')
+
+    if (existingScript) {
+      existingScript.addEventListener('load', loadGoogle)
+      return () => {
+        existingScript.removeEventListener('load', loadGoogle)
+      }
+    }
+
     const script = document.createElement('script')
     script.src = 'https://accounts.google.com/gsi/client'
     script.async = true
@@ -185,7 +216,7 @@ function App() {
     document.body.appendChild(script)
 
     return () => {
-      document.body.removeChild(script)
+      script.removeEventListener('load', loadGoogle)
     }
   }, [googleClientId])
 
@@ -199,7 +230,7 @@ function App() {
     return hostels.filter((hostel) => [hostel.name, hostel.location, hostel.area, hostel.university, hostel.description].join(' ').toLowerCase().includes(query))
   }, [hostels, search])
 
-  const currentRole = session?.user?.role || 'guest'
+  const currentRole = session?.user?.user_metadata?.role || 'guest'
   const pendingBookings = bookings.filter((booking) => booking.bookingStatus === 'pending').length
 
   const handleSubmit = async (event) => {
@@ -208,18 +239,29 @@ function App() {
     setMessage(authMode === 'login' ? 'Checking your login details...' : 'Creating your account...')
 
     try {
-      const payload = {
-        name: form.name,
-        email: form.email,
-        password: form.password,
-        university: form.university,
+      if (authMode === 'login') {
+        const data = await signInUser({
+          email: form.email,
+          password: form.password,
+        })
+
+        setSession(data.session)
+        setMessage(`Welcome ${data.user.user_metadata?.name || data.user.email}! Your ${data.user.user_metadata?.role || 'student'} dashboard is ready.`)
+      } else {
+        const data = await signUpUser({
+          email: form.email,
+          password: form.password,
+          name: form.name,
+          university: form.university,
+        })
+
+        if (data.session) {
+          setSession(data.session)
+          setMessage(`Welcome ${data.user.user_metadata?.name || data.user.email}! Your ${data.user.user_metadata?.role || 'student'} dashboard is ready.`)
+        } else {
+          setMessage('Check your inbox to confirm your email address and finish creating your account.')
+        }
       }
-
-      const data = authMode === 'login' ? await loginUser(payload) : await registerUser(payload)
-
-      saveSession({ token: data.token, user: data.user })
-      setSession({ token: data.token, user: data.user })
-      setMessage(`Welcome ${data.user.name}! Your ${data.user.role} dashboard is ready.`)
 
       if (typeof window !== 'undefined') {
         window.location.hash = '#dashboard'
@@ -231,10 +273,13 @@ function App() {
     }
   }
 
-  const handleLogout = () => {
-    clearSession()
-    setSession(null)
-    setMessage('You are signed out. You can sign in again anytime to continue booking.')
+  const handleLogout = async () => {
+    try {
+      await signOutUser()
+    } finally {
+      setSession(null)
+      setMessage('You are signed out. You can sign in again anytime to continue booking.')
+    }
   }
 
   const handleAddHostel = async (event) => {
@@ -245,7 +290,9 @@ function App() {
       return
     }
 
-    if (session.user.role !== 'owner' && session.user.role !== 'admin') {
+    const role = session.user.user_metadata?.role || 'student'
+
+    if (role !== 'owner' && role !== 'admin') {
       setMessage('Only owners and admins can add hostels.')
       return
     }
@@ -290,7 +337,7 @@ function App() {
       return
     }
 
-    if (session.user.role !== 'student') {
+    if ((session.user.user_metadata?.role || 'student') !== 'student') {
       setMessage('Only students can create booking requests.')
       return
     }
@@ -317,11 +364,13 @@ function App() {
       return 'Create an account to unlock the student, owner, and admin dashboards.'
     }
 
-    if (session.user.role === 'owner') {
+    const role = session.user.user_metadata?.role || 'student'
+
+    if (role === 'owner') {
       return 'Owner dashboard: add hostels, manage pricing, and review booking activity.'
     }
 
-    if (session.user.role === 'admin') {
+    if (role === 'admin') {
       return 'Admin dashboard: review live hostels, approve bookings, and oversee visibility.'
     }
 
@@ -355,7 +404,7 @@ function App() {
                 <p className="eyebrow">Student-first hostel booking</p>
                 <h1 className="display-4 fw-bold mb-3">Book smarter, live faster, and manage hostels in one place.</h1>
                 <p className="lead text-secondary mb-4">
-                  HostelHub gives students a clean booking experience while giving owners and admins a live dashboard for hostels, rooms, and bookings.
+                  HostelHub gives students a clean booking experience while giving live updates for hostels, rooms, and bookings.
                 </p>
                 <div className="d-flex flex-wrap gap-3 mb-4">
                   <a href="#discover" className="btn btn-primary btn-lg">Explore hostels</a>
@@ -368,7 +417,7 @@ function App() {
                   </div>
                   {session?.user ? (
                     <div className="d-flex align-items-center gap-2 flex-wrap">
-                      <span className="badge bg-primary">{session.user.role}</span>
+                      <span className="badge bg-primary">{session.user.user_metadata?.role || 'student'}</span>
                       <span className="text-secondary">{session.user.email}</span>
                       <button className="btn btn-outline-secondary btn-sm" onClick={handleLogout}>Sign out</button>
                     </div>
@@ -451,7 +500,7 @@ function App() {
                 <p className="eyebrow">Live hostels</p>
                 <h2 className="h3 fw-bold">Fresh listings from your database</h2>
               </div>
-              <p className="text-secondary mb-0">When your CockroachDB tables are connected, these cards are populated directly from the backend.</p>
+              <p className="text-secondary mb-0">When your Supabase tables are connected, these cards are populated directly from the backend.</p>
             </div>
 
             {isLoading ? (
@@ -486,7 +535,7 @@ function App() {
             ) : (
               <div className="empty-state fade-up">
                 <h3 className="h5 fw-bold">No live rooms are available yet</h3>
-                <p className="text-secondary mb-0">Connect your CockroachDB tables and add a hostel through the owner dashboard to populate this section.</p>
+                <p className="text-secondary mb-0">Connect your Supabase tables and add a hostel through the owner dashboard to populate this section.</p>
               </div>
             )}
           </div>
@@ -614,7 +663,7 @@ function App() {
                 <div className="auth-card fade-up">
                   <p className="eyebrow">Access your account</p>
                   <h2 className="h3 fw-bold">Login or register in seconds</h2>
-                  <p className="text-secondary">Public signups are student-only. Use your email and password, or sign in with Google if your client ID is configured. Admin access is available when ADMIN_EMAIL and ADMIN_PASSWORD are set in your backend environment.</p>
+                  <p className="text-secondary">Public signups are student-only and now run through Supabase Auth. Use your email and password, or sign in with Google if your client ID is configured.</p>
                   <div className="btn-group w-100 mb-4" role="group">
                     <button type="button" className={`btn ${authMode === 'login' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setAuthMode('login')}>Login</button>
                     <button type="button" className={`btn ${authMode === 'register' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setAuthMode('register')}>Register</button>
