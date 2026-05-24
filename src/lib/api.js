@@ -9,6 +9,20 @@ export function getStoredSession() {
   }
 }
 
+async function parseResponseBody(response) {
+  const text = await response.text().catch(() => '')
+
+  if (!text) {
+    return {}
+  }
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    return { message: text }
+  }
+}
+
 export async function apiRequest(path, options = {}) {
   const session = getStoredSession()
   const response = await fetch(`${API_BASE}${path}`, {
@@ -20,10 +34,10 @@ export async function apiRequest(path, options = {}) {
     ...options,
   })
 
-  const data = await response.json().catch(() => ({}))
+  const data = await parseResponseBody(response)
 
   if (!response.ok) {
-    throw new Error(data?.message || 'Request failed')
+    throw new Error(data?.message || data?.error || 'Request failed')
   }
 
   return data

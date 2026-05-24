@@ -48,10 +48,6 @@ function jsonResponse(res, statusCode, payload, origin) {
   res.end(JSON.stringify(payload))
 }
 
-function serviceUnavailable(origin, message) {
-  return jsonResponse(res => res, 503, { message }, origin)
-}
-
 function readJsonBody(req) {
   if (!req.body) {
     return {}
@@ -185,7 +181,18 @@ async function ensureSchema() {
         university STRING,
         description STRING,
         price_cents INT NOT NULL DEFAULT 0,
+        image_url STRING,
         status STRING NOT NULL DEFAULT 'available',
+        created_at TIMESTAMPTZ DEFAULT now()
+      )
+    `)
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS hostel_images (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        hostel_id UUID NOT NULL REFERENCES hostels(id) ON DELETE CASCADE,
+        image_url STRING NOT NULL,
+        caption STRING,
         created_at TIMESTAMPTZ DEFAULT now()
       )
     `)
@@ -215,11 +222,6 @@ async function ensureSchema() {
         notes STRING,
         created_at TIMESTAMPTZ DEFAULT now()
       )
-    `)
-
-    await client.query(`
-      ALTER TABLE bookings
-      ADD COLUMN IF NOT EXISTS hostel_id UUID
     `)
 
     schemaReady = true
@@ -281,16 +283,24 @@ async function getHostelsFromDb() {
   try {
     const result = await client.query(`
       SELECT
-        id,
-        name,
-        location,
-        area,
-        university,
-        description,
-        price_cents,
-        status
-      FROM hostels
-      ORDER BY created_at DESC
+        h.id,
+        h.name,
+        h.location,
+        h.area,
+        h.university,
+        h.description,
+        h.price_cents,
+        h.status,
+        COALESCE(h.image_url, hi.image_url) AS image_url
+      FROM hostels h
+      LEFT JOIN LATERAL (
+        SELECT image_url
+        FROM hostel_images
+        WHERE hostel_id = h.id
+        ORDER BY created_at
+        LIMIT 1
+      ) hi ON true
+      ORDER BY h.created_at DESC
     `)
 
     return result.rows.map((hostel) => ({
@@ -302,6 +312,7 @@ async function getHostelsFromDb() {
       description: hostel.description,
       price: `$${(hostel.price_cents / 100).toFixed(0)}/month`,
       status: hostel.status,
+      image_url: hostel.image_url,
     }))
   } finally {
     client.release()
@@ -312,9 +323,11 @@ async function createHostelRecord(ownerId, payload) {
   const client = await getPool().connect()
 
   try {
-    const result = await client.query(
-      `INSERT INTO hostels (owner_id, name, location, area, university, description, price_cents, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    await client.query('BEGIN')
+
+    const hostelResult = await client.query(
+      `INSERT INTO hostels (owner_id, name, location, area, university, description, price_cents, image_url, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
         ownerId,
@@ -324,11 +337,22 @@ async function createHostelRecord(ownerId, payload) {
         payload.university,
         payload.description,
         parsePriceCents(payload.price),
+        payload.image_url || null,
         payload.status || 'available',
       ],
     )
 
-    const hostel = result.rows[0]
+    const hostel = hostelResult.rows[0]
+
+    if (payload.image_url) {
+      await client.query(
+        `INSERT INTO hostel_images (hostel_id, image_url, caption)
+         VALUES ($1, $2, $3)`,
+        [hostel.id, payload.image_url, payload.image_caption || null],
+      )
+    }
+
+    await client.query('COMMIT')
 
     return {
       id: hostel.id,
@@ -339,7 +363,11 @@ async function createHostelRecord(ownerId, payload) {
       description: hostel.description,
       price: `$${(hostel.price_cents / 100).toFixed(0)}/month`,
       status: hostel.status,
+      image_url: hostel.image_url,
     }
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {})
+    throw error
   } finally {
     client.release()
   }

@@ -1,7 +1,7 @@
 :root {
   font-family: Inter, system-ui, sans-serif;
   color: #0f172a;
-  background: #f8fafc;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
   line-height: 1.5;
   font-weight: 400;
 }
@@ -15,6 +15,144 @@ body {
   min-height: 100vh;
 }
 
+.home-shell {
+  min-height: 100vh;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(16px);
+  background: rgba(15, 23, 42, 0.86);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nav-link {
+  color: #e2e8f0;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.nav-link:hover {
+  color: #ffffff;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #2563eb;
+  margin-bottom: 0.5rem;
+}
+
+.topbar-tag {
+  color: #cbd5e1;
+  font-size: 0.85rem;
+}
+
+.hero-section {
+  padding: 2rem 0 3rem;
+}
+
+.hero-copy {
+  padding-right: 1rem;
+}
+
+.hero-panel,
+.auth-card,
+.auth-side-card,
+.dashboard-card,
+.hostel-card,
+.empty-state {
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+}
+
+.hero-panel-inner,
+.auth-card,
+.auth-side-card,
+.dashboard-card {
+  padding: 1.5rem;
+}
+
+.status-banner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(37, 99, 235, 0.08);
+}
+
+.stat-card {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+}
+
+.feature-card {
+  border-radius: 1.25rem;
+  min-height: 170px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+}
+
+.hostel-card {
+  overflow: hidden;
+}
+
+.hostel-image {
+  min-height: 180px;
+}
+
+.empty-state {
+  padding: 2rem;
+}
+
+.divider-text {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #64748b;
+  margin-bottom: 1rem;
+}
+
+.divider-text::before,
+.divider-text::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: #dbeafe;
+}
+
+.benefit-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.fade-up {
+  animation: fadeUp 700ms ease both;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .btn:hover {
   transform: translateY(-1px);
 }
@@ -22,5 +160,9 @@ body {
 @media (max-width: 768px) {
   .display-4 {
     font-size: 2.2rem;
+  }
+
+  .status-banner {
+    flex-direction: column;
   }
 }
